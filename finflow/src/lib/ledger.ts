@@ -22,10 +22,16 @@ export async function seedChartOfAccounts(organizationId: string) {
   );
 }
 
-export async function getAccountByCode(organizationId: string, code: string) {
-  return db.query.accounts.findFirst({
+type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function findAccountByCode(executor: Executor, organizationId: string, code: string) {
+  return executor.query.accounts.findFirst({
     where: and(eq(accounts.organizationId, organizationId), eq(accounts.code, code)),
   });
+}
+
+export async function getAccountByCode(organizationId: string, code: string) {
+  return findAccountByCode(db, organizationId, code);
 }
 
 type JournalLineInput = { accountCode: string; debit?: number; credit?: number };
@@ -59,7 +65,7 @@ export async function recordJournalEntry(params: {
       .returning();
 
     for (const line of params.lines) {
-      const account = await getAccountByCode(params.organizationId, line.accountCode);
+      const account = await findAccountByCode(tx, params.organizationId, line.accountCode);
       if (!account) {
         throw new Error(`Unknown account code "${line.accountCode}" for organization ${params.organizationId}`);
       }

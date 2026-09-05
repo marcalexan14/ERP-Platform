@@ -1,19 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Receipt, FileText, BarChart3, Settings, Users } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { getCurrentOrganization } from "@/lib/org";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
-  { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
-  { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
-  { href: "/dashboard/clients", label: "Clients", icon: Users },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-];
+import { SidebarNav } from "@/components/dashboard/sidebar-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -24,37 +16,36 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const initials = (session.user.name ?? session.user.email ?? "?").slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card sm:flex">
-        <div className="flex h-16 items-center gap-2 border-b px-6">
+    <div className="flex min-h-screen bg-muted/30">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar sm:flex">
+        <div className="flex h-16 items-center gap-2 border-b border-border px-6">
           <span
-            className="flex h-7 w-7 items-center justify-center rounded-md text-sm font-bold text-white"
-            style={{ backgroundColor: accentColor }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm"
+            style={{ background: `linear-gradient(135deg, ${accentColor}, color-mix(in oklch, ${accentColor}, black 15%))` }}
           >
             {org?.name?.[0]?.toUpperCase() ?? "F"}
           </span>
-          <span className="font-semibold">{org?.name ?? "FinFlow"}</span>
+          <span className="flex items-center gap-1 font-semibold">
+            {org?.name ?? (
+              <>
+                <Sparkles className="h-4 w-4 text-brand-teal" /> FinFlow
+              </>
+            )}
+          </span>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <SidebarNav />
+        <div className="border-t border-border p-3 text-xs text-muted-foreground">
+          Signed in as <span className="font-medium text-foreground">{session.user.email}</span>
+        </div>
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-          <div className="text-sm text-muted-foreground">{org?.name}</div>
+        <header className="flex h-16 items-center justify-between border-b border-border bg-background/70 px-6 backdrop-blur-md">
+          <div className="text-sm font-medium text-muted-foreground">{org?.name}</div>
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>{initials}</AvatarFallback>
+            <ThemeToggle />
+            <Avatar className="h-8 w-8 ring-2 ring-accent">
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
             <form
               action={async () => {
@@ -68,7 +59,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </form>
           </div>
         </header>
-        <main className="flex-1 bg-muted/20 p-6">{children}</main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );

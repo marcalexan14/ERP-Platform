@@ -261,6 +261,10 @@ export const recurringRules = pgTable("recurring_rules", {
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
   kind: recurringKindEnum("kind").notNull(),
+  // Set for kind = INVOICE (who to bill); ignored for EXPENSE.
+  clientId: text("client_id").references(() => clients.id),
+  // Set for kind = EXPENSE (optional categorization); ignored for INVOICE.
+  categoryId: text("category_id").references(() => categories.id),
   frequency: recurrenceFrequencyEnum("frequency").notNull(),
   nextRunDate: timestamp("next_run_date").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
@@ -373,6 +377,15 @@ export const expensesRelations = relations(expenses, ({ one, many }) => ({
   }),
   category: one(categories, { fields: [expenses.categoryId], references: [categories.id] }),
   attachments: many(attachments),
+}));
+
+export const recurringRulesRelations = relations(recurringRules, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [recurringRules.organizationId],
+    references: [organizations.id],
+  }),
+  client: one(clients, { fields: [recurringRules.clientId], references: [clients.id] }),
+  category: one(categories, { fields: [recurringRules.categoryId], references: [categories.id] }),
 }));
 
 export const attachmentsRelations = relations(attachments, ({ one }) => ({

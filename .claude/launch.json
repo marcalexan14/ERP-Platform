@@ -6,6 +6,12 @@
       "runtimeExecutable": "D:\\Claude\\finflow\\dev.cmd",
       "runtimeArgs": [],
       "port": 3000
+    },
+    {
+      "name": "money-journal-live",
+      "runtimeExecutable": "D:\\Claude\\money-journal-live\\dev.cmd",
+      "runtimeArgs": [],
+      "port": 5173
     }
   ]
 }

@@ -31,18 +31,25 @@ Other scripts:
 
 **Sign-up flow** (`src/app/actions/auth.ts`): creates the `User`, an `Organization`, an `OWNER` `Membership`, and seeds the chart of accounts, all before signing the user in — so every account always has a working organization.
 
+**Recurring transactions**: `src/lib/recurring.ts` finds every active rule whose `nextRunDate` has passed and creates the underlying expense or invoice (plus its ledger entry), then advances `nextRunDate` by one interval. Each call processes **one period per rule**, not a full catch-up of every missed period — a daily cron naturally stays current, but a rule left unattended for months needs that many ticks (or manual "Run due now" clicks) to fully backfill. There's no automatic scheduler; wire up one of:
+- **Vercel Cron** — `vercel.json` already has an entry hitting `/api/cron/run-recurring` daily at 6am UTC. Set a `CRON_SECRET` env var in your Vercel project and Vercel automatically sends it as `Authorization: Bearer <value>`, which the route checks.
+- **Any external cron** (cron-job.org, GitHub Actions schedule, etc.) — hit `GET /api/cron/run-recurring` with an `Authorization: Bearer <CRON_SECRET>` header yourself.
+- **Manual** — the "Run due now" button on `/dashboard/recurring` runs it for just the current org, for testing/demos without any scheduler.
+
+**File storage**: `src/lib/storage.ts` writes uploads to `public/uploads/<orgId>/` on local disk — fine for a single persistent server, but **breaks on Vercel/serverless** (ephemeral filesystem) or any multi-instance deployment. Before deploying there, swap it for S3, Vercel Blob, or Supabase Storage — the call site (`saveUploadedFile` in `expenses.ts`'s action) only needs its return shape (`fileName`, `fileUrl`, `mimeType`) to stay the same.
+
 ## Roadmap
 
-**Phase 1 (MVP — in progress)**
+**Phase 1 (MVP — feature-complete)**
 - [x] Multi-tenant auth, roles (`OWNER/ADMIN/ACCOUNTANT/EMPLOYEE/VIEWER` defined; only OWNER assigned so far at sign-up)
 - [x] Double-entry ledger + chart of accounts
 - [x] Expense/income tracking with categories, wired to the ledger
 - [x] Dashboard with KPI cards + revenue/expense chart
-- [ ] Invoicing (create/send/track, PDF generation, multi-currency)
-- [ ] P&L / Balance Sheet / Cash Flow report pages (the data layer in `reports.ts` is there; needs UI)
-- [ ] Clients CRUD
-- [ ] Recurring transactions (schema exists: `recurringRules`; no scheduler/UI yet)
-- [ ] Receipt/invoice file attachments (schema exists: `attachments`; no upload UI yet)
+- [x] Clients CRUD
+- [x] Invoicing (create/send + mark paid, wired to the ledger as accrual-basis AR/Revenue then Cash/AR). Still missing: PDF generation, multi-currency, editing/voiding
+- [x] P&L / Balance Sheet / Cash Flow report pages (`src/app/dashboard/reports/page.tsx`, data layer in `reports.ts`)
+- [x] Recurring transactions — `/dashboard/recurring`, generates the underlying expense/invoice + ledger entry when due. See "Recurring transactions" below for how to actually schedule it.
+- [x] Receipt attachments on expenses — local disk storage under `public/uploads/`; see "File storage" below before deploying anywhere with an ephemeral filesystem. Invoices don't have an attachment UI yet, though the schema/storage helper both support it (`attachments.invoiceId`)
 
 **Phase 2**
 - [ ] Payroll-lite (salary as recurring expense + payslip PDF — not tax-compliant payroll; that's a much bigger scope if ever needed)
@@ -61,3 +68,5 @@ Other scripts:
 - **Next.js 16 renamed `middleware.ts` to `proxy.ts`**, and the exported function to `proxy`. Don't reintroduce a `middleware.ts` — it won't run.
 - **shadcn/ui components here use Base UI**, not Radix. Polymorphic rendering uses `render={<Link href="..." />}` instead of `asChild` + a child element. If you copy a shadcn snippet from older docs/tutorials using `asChild`, translate it.
 - **Server Actions require real browser JS** to redirect after `signIn()`/`redirect()` — if you're scripting form submissions (e.g. Playwright), submit via the real button, not a synthetic `.click()` on a detached reference.
+- **Base UI's `Select` needs explicit wiring for forms when the value isn't the display text.** `SelectValue` renders the raw value by default — pass a children render function (`<SelectValue>{(v) => label}</SelectValue>`) to show something else. And when values are opaque ids (like `clientId` in `invoice-form.tsx`), don't rely on the uncontrolled `name` prop alone — use `value`/`onValueChange` with your own state plus an explicit `<input type="hidden" name="..." value={state} />`. This is what `src/components/dashboard/invoice-form.tsx` does.
+- **`db.transaction(async (tx) => ...)` — always query through `tx` inside the callback, never the outer `db`.** A nested query against the outer connection pool while a transaction holds a connection can deadlock under a small pool (exactly what happened in `recordJournalEntry` during development — see `findAccountByCode` in `src/lib/ledger.ts` for the fix). It fails silently as a hang, not an error, so it's easy to miss.

@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getCurrentOrganization } from "@/lib/org";
 import { db } from "@/db";
-import { expenses, categories } from "@/db/schema";
+import { expenses, categories, attachments } from "@/db/schema";
 import { addExpenseAction } from "@/app/actions/expenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,9 +37,11 @@ export default async function ExpensesPage() {
       description: expenses.description,
       date: expenses.date,
       categoryName: categories.name,
+      receiptUrl: attachments.fileUrl,
     })
     .from(expenses)
     .leftJoin(categories, eq(expenses.categoryId, categories.id))
+    .leftJoin(attachments, eq(attachments.expenseId, expenses.id))
     .where(eq(expenses.organizationId, org.id))
     .orderBy(desc(expenses.date))
     .limit(50);
@@ -56,7 +58,7 @@ export default async function ExpensesPage() {
           <CardTitle className="text-base">Add entry</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={addExpenseAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+          <form action={addExpenseAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
             <div className="space-y-2">
               <Label htmlFor="kind">Type</Label>
               <Select name="kind" defaultValue="EXPENSE">
@@ -77,9 +79,13 @@ export default async function ExpensesPage() {
               <Label htmlFor="category">Category</Label>
               <Input id="category" name="category" placeholder="e.g. Software" />
             </div>
-            <div className="space-y-2 lg:col-span-1">
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Input id="description" name="description" placeholder="Optional note" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="receipt">Receipt</Label>
+              <Input id="receipt" name="receipt" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" />
             </div>
             <Button type="submit">Add entry</Button>
           </form>
@@ -98,13 +104,14 @@ export default async function ExpensesPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Receipt</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                     No entries yet.
                   </TableCell>
                 </TableRow>
@@ -117,6 +124,20 @@ export default async function ExpensesPage() {
                   </TableCell>
                   <TableCell>{row.categoryName ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{row.description || "—"}</TableCell>
+                  <TableCell>
+                    {row.receiptUrl ? (
+                      <a
+                        href={row.receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-4"
+                      >
+                        View
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right font-medium">{currency.format(Number(row.amount))}</TableCell>
                 </TableRow>
               ))}

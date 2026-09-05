@@ -3,10 +3,11 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, expenses } from "@/db/schema";
+import { attachments, categories, expenses } from "@/db/schema";
 import { auth } from "@/auth";
 import { requireOrgId } from "@/lib/org";
 import { recordJournalEntry } from "@/lib/ledger";
+import { saveUploadedFile } from "@/lib/storage";
 
 export async function addExpenseAction(formData: FormData) {
   const session = await auth();
@@ -70,6 +71,18 @@ export async function addExpenseAction(formData: FormData) {
             { accountCode: "4000", credit: amount },
           ],
   });
+
+  const receipt = formData.get("receipt");
+  if (receipt instanceof File && receipt.size > 0) {
+    const saved = await saveUploadedFile(organizationId, receipt);
+    if (saved) {
+      await db.insert(attachments).values({
+        organizationId,
+        expenseId: expense.id,
+        ...saved,
+      });
+    }
+  }
 
   revalidatePath("/dashboard/expenses");
   revalidatePath("/dashboard");
