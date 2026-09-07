@@ -114,3 +114,44 @@ export async function markInvoicePaidAction(formData: FormData) {
   revalidatePath("/dashboard/invoices");
   revalidatePath("/dashboard");
 }
+
+// Reverses a payment recorded in error. Never edits or deletes the original
+// "paid" journal entry — posts the opposite entry instead, so the ledger
+// keeps a full, honest audit trail of what actually happened and when.
+export async function unmarkInvoicePaidAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+
+  const organizationId = await requireOrgId(session.user.id);
+  const invoiceId = String(formData.get("invoiceId") ?? "");
+  if (!invoiceId) throw new Error("Missing invoice id");
+
+  const invoice = await db.query.invoices.findFirst({
+    where: and(eq(invoices.id, invoiceId), eq(invoices.organizationId, organizationId)),
+    with: { lines: true },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+  if (invoice.status !== "PAID") return;
+
+  const total = computeInvoiceTotal(invoice.lines);
+  const revertedStatus = invoice.dueDate < new Date() ? "OVERDUE" : "SENT";
+
+  await db
+    .update(invoices)
+    .set({ status: revertedStatus, paidAt: null })
+    .where(eq(invoices.id, invoiceId));
+
+  await recordJournalEntry({
+    organizationId,
+    memo: `Invoice ${invoice.number} payment reversed`,
+    sourceType: "invoice",
+    sourceId: invoice.id,
+    lines: [
+      { accountCode: "1100", debit: total },
+      { accountCode: "1000", credit: total },
+    ],
+  });
+
+  revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard");
+}

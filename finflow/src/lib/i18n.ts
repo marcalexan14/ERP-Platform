@@ -83,6 +83,7 @@ const dictionary = {
   invoices_col_total: { en: "Total", ar: "الإجمالي" },
   invoices_col_action: { en: "Action", ar: "الإجراء" },
   invoices_mark_paid: { en: "Mark paid", ar: "تحديد كمدفوعة" },
+  invoices_undo_paid: { en: "Undo payment", ar: "التراجع عن الدفع" },
   invoices_empty: { en: "No invoices yet.", ar: "لا توجد فواتير بعد." },
   invoices_add_client_first: {
     en: "Add a client first before creating an invoice — see the Clients page.",

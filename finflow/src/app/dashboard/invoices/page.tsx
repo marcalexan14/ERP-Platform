@@ -6,7 +6,7 @@ import { getCurrentOrganization } from "@/lib/org";
 import { db } from "@/db";
 import { invoices, clients } from "@/db/schema";
 import { computeInvoiceTotal } from "@/lib/invoices";
-import { markInvoicePaidAction } from "@/app/actions/invoices";
+import { markInvoicePaidAction, unmarkInvoicePaidAction } from "@/app/actions/invoices";
 import { InvoiceForm } from "@/components/dashboard/invoice-form";
 import { getTranslator, type TranslationKey } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,6 +117,14 @@ export default async function InvoicesPage() {
                         <input type="hidden" name="invoiceId" value={inv.id} />
                         <Button type="submit" size="sm" variant="outline">
                           {t("invoices_mark_paid")}
+                        </Button>
+                      </form>
+                    )}
+                    {inv.status === "PAID" && (
+                      <form action={unmarkInvoicePaidAction}>
+                        <input type="hidden" name="invoiceId" value={inv.id} />
+                        <Button type="submit" size="sm" variant="ghost">
+                          {t("invoices_undo_paid")}
                         </Button>
                       </form>
                     )}
