@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createInvoiceAction } from "@/app/actions/invoices";
+import { getTranslator } from "@/lib/i18n";
 
 type LineRow = { id: string; description: string; quantity: string; unitPrice: string };
 
@@ -14,7 +15,8 @@ function newRow(): LineRow {
   return { id: crypto.randomUUID(), description: "", quantity: "1", unitPrice: "" };
 }
 
-export function InvoiceForm({ clients }: { clients: { id: string; name: string }[] }) {
+export function InvoiceForm({ clients, locale }: { clients: { id: string; name: string }[]; locale: string }) {
+  const t = getTranslator(locale);
   const [rows, setRows] = useState<LineRow[]>([newRow()]);
   const [clientId, setClientId] = useState("");
 
@@ -26,11 +28,11 @@ export function InvoiceForm({ clients }: { clients: { id: string; name: string }
     <form action={createInvoiceAction} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="clientId">Client</Label>
+          <Label htmlFor="clientId">{t("client")}</Label>
           <Select value={clientId} onValueChange={(v) => setClientId(v ?? "")}>
             <SelectTrigger id="clientId">
-              <SelectValue placeholder="Select a client">
-                {(value: string | null) => clients.find((c) => c.id === value)?.name ?? "Select a client"}
+              <SelectValue placeholder={t("select_client")}>
+                {(value: string | null) => clients.find((c) => c.id === value)?.name ?? t("select_client")}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -44,19 +46,19 @@ export function InvoiceForm({ clients }: { clients: { id: string; name: string }
           <input type="hidden" name="clientId" value={clientId} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dueDate">Due date</Label>
+          <Label htmlFor="dueDate">{t("invoices_due_date")}</Label>
           <Input id="dueDate" name="dueDate" type="date" required />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Line items</Label>
+        <Label>{t("invoices_line_items")}</Label>
         <div className="space-y-2">
           {rows.map((row) => (
             <div key={row.id} className="grid grid-cols-[1fr_5rem_6rem_auto] items-center gap-2">
               <Input
                 name="description"
-                placeholder="Description"
+                placeholder={t("invoices_description_placeholder")}
                 value={row.description}
                 onChange={(e) => updateRow(row.id, "description", e.target.value)}
               />
@@ -65,7 +67,7 @@ export function InvoiceForm({ clients }: { clients: { id: string; name: string }
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Qty"
+                placeholder={t("invoices_qty_placeholder")}
                 value={row.quantity}
                 onChange={(e) => updateRow(row.id, "quantity", e.target.value)}
               />
@@ -74,7 +76,7 @@ export function InvoiceForm({ clients }: { clients: { id: string; name: string }
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Price"
+                placeholder={t("invoices_price_placeholder")}
                 value={row.unitPrice}
                 onChange={(e) => updateRow(row.id, "unitPrice", e.target.value)}
               />
@@ -92,16 +94,16 @@ export function InvoiceForm({ clients }: { clients: { id: string; name: string }
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setRows((prev) => [...prev, newRow()])}>
           <Plus className="h-4 w-4" />
-          Add line
+          {t("add_line")}
         </Button>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Input id="notes" name="notes" placeholder="Optional" />
+        <Label htmlFor="notes">{t("notes")}</Label>
+        <Input id="notes" name="notes" placeholder={t("optional")} />
       </div>
 
-      <Button type="submit">Create &amp; send invoice</Button>
+      <Button type="submit">{t("invoices_create_send")}</Button>
     </form>
   );
 }

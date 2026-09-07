@@ -38,6 +38,8 @@ Other scripts:
 
 **File storage**: `src/lib/storage.ts` writes uploads to `public/uploads/<orgId>/` on local disk — fine for a single persistent server, but **breaks on Vercel/serverless** (ephemeral filesystem) or any multi-instance deployment. Before deploying there, swap it for S3, Vercel Blob, or Supabase Storage — the call site (`saveUploadedFile` in `expenses.ts`'s action) only needs its return shape (`fileName`, `fileUrl`, `mimeType`) to stay the same.
 
+**Language / RTL**: each organization has a `locale` column (`organizations.locale`, `en` or `ar`), settable on `/dashboard/settings`. `src/lib/i18n.ts` holds a small string dictionary and `getTranslator(locale)`; `dashboard/layout.tsx` sets `dir="rtl"` on the root when locale is `ar`, which auto-mirrors flex-based layouts (sidebar, KPI cards, header). Money always renders with Western digits regardless of locale (a deliberate choice for a financial app) — see the `Intl.NumberFormat` calls. **Coverage is intentionally partial**: only the dashboard shell (nav, sign-out) and dashboard home page (KPIs, chart titles) are translated so far — extending it to Invoices/Expenses/Reports/etc. is just adding more keys to the `dictionary` in `i18n.ts` and calling `t()` in those pages the same way. A locale-aware value can never be a prop passed from a Server Component to a Client Component as a function (e.g. `t` itself) — pass the resolved strings, or the plain `locale` string and call `getTranslator` again client-side, as `sidebar-nav.tsx` does.
+
 ## Roadmap
 
 **Phase 1 (MVP — feature-complete)**
@@ -50,6 +52,7 @@ Other scripts:
 - [x] P&L / Balance Sheet / Cash Flow report pages (`src/app/dashboard/reports/page.tsx`, data layer in `reports.ts`)
 - [x] Recurring transactions — `/dashboard/recurring`, generates the underlying expense/invoice + ledger entry when due. See "Recurring transactions" below for how to actually schedule it.
 - [x] Receipt attachments on expenses — local disk storage under `public/uploads/`; see "File storage" below before deploying anywhere with an ephemeral filesystem. Invoices don't have an attachment UI yet, though the schema/storage helper both support it (`attachments.invoiceId`)
+- [x] Language setting (English/Arabic) with RTL layout — see "Language / RTL" below; translation coverage is partial by design, easy to extend
 
 **Phase 2**
 - [ ] Payroll-lite (salary as recurring expense + payslip PDF — not tax-compliant payroll; that's a much bigger scope if ever needed)

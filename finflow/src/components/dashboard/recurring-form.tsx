@@ -6,13 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createRecurringRuleAction } from "@/app/actions/recurring";
+import { getTranslator, type TranslationKey } from "@/lib/i18n";
 
 const FREQUENCIES = ["WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"] as const;
+const FREQ_KEYS: Record<string, TranslationKey> = {
+  WEEKLY: "freq_weekly",
+  MONTHLY: "freq_monthly",
+  QUARTERLY: "freq_quarterly",
+  YEARLY: "freq_yearly",
+};
 
-export function RecurringForm({ clients }: { clients: { id: string; name: string }[] }) {
+export function RecurringForm({ clients, locale }: { clients: { id: string; name: string }[]; locale: string }) {
+  const t = getTranslator(locale);
   const [kind, setKind] = useState<"EXPENSE" | "INVOICE">("EXPENSE");
   const [frequency, setFrequency] = useState<(typeof FREQUENCIES)[number]>("MONTHLY");
   const [clientId, setClientId] = useState("");
+
+  const kindLabel = (v: string) => (v === "INVOICE" ? t("status_invoice") : t("status_expense"));
 
   return (
     <form action={createRecurringRuleAction} className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:items-end">
@@ -21,25 +31,25 @@ export function RecurringForm({ clients }: { clients: { id: string; name: string
       {kind === "INVOICE" && <input type="hidden" name="clientId" value={clientId} />}
 
       <div className="space-y-2">
-        <Label htmlFor="kind">Type</Label>
-        <Select value={kind} onValueChange={(v) => setKind(v as "EXPENSE" | "INVOICE")}>
+        <Label htmlFor="kind">{t("type")}</Label>
+        <Select value={kind} onValueChange={(v) => setKind((v as "EXPENSE" | "INVOICE") ?? "EXPENSE")}>
           <SelectTrigger id="kind">
-            <SelectValue />
+            <SelectValue>{(v: string) => kindLabel(v)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="EXPENSE">Expense</SelectItem>
-            <SelectItem value="INVOICE">Invoice</SelectItem>
+            <SelectItem value="EXPENSE">{t("status_expense")}</SelectItem>
+            <SelectItem value="INVOICE">{t("status_invoice")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {kind === "INVOICE" && (
         <div className="space-y-2">
-          <Label htmlFor="clientId">Client</Label>
+          <Label htmlFor="clientId">{t("client")}</Label>
           <Select value={clientId} onValueChange={(v) => setClientId(v ?? "")}>
             <SelectTrigger id="clientId">
-              <SelectValue placeholder="Select a client">
-                {(value: string | null) => clients.find((c) => c.id === value)?.name ?? "Select a client"}
+              <SelectValue placeholder={t("select_client")}>
+                {(value: string | null) => clients.find((c) => c.id === value)?.name ?? t("select_client")}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -54,15 +64,15 @@ export function RecurringForm({ clients }: { clients: { id: string; name: string
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="frequency">Frequency</Label>
-        <Select value={frequency} onValueChange={(v) => setFrequency(v as (typeof FREQUENCIES)[number])}>
+        <Label htmlFor="frequency">{t("recurring_frequency")}</Label>
+        <Select value={frequency} onValueChange={(v) => setFrequency((v as (typeof FREQUENCIES)[number]) ?? "MONTHLY")}>
           <SelectTrigger id="frequency">
-            <SelectValue />
+            <SelectValue>{(v: string) => t(FREQ_KEYS[v])}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {FREQUENCIES.map((f) => (
               <SelectItem key={f} value={f}>
-                {f[0] + f.slice(1).toLowerCase()}
+                {t(FREQ_KEYS[f])}
               </SelectItem>
             ))}
           </SelectContent>
@@ -70,21 +80,21 @@ export function RecurringForm({ clients }: { clients: { id: string; name: string
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount (USD)</Label>
+        <Label htmlFor="amount">{t("amount_usd")}</Label>
         <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="startDate">Starts</Label>
+        <Label htmlFor="startDate">{t("recurring_starts")}</Label>
         <Input id="startDate" name="startDate" type="date" required />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Input id="description" name="description" placeholder="e.g. Hosting subscription" />
+        <Label htmlFor="description">{t("description")}</Label>
+        <Input id="description" name="description" placeholder={t("recurring_description_placeholder")} />
       </div>
 
-      <Button type="submit">Add recurring rule</Button>
+      <Button type="submit">{t("recurring_add_rule")}</Button>
     </form>
   );
 }

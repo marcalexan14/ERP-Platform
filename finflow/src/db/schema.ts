@@ -101,6 +101,8 @@ export const organizations = pgTable("organizations", {
   logoUrl: text("logo_url"),
   accentColor: text("accent_color").notNull().default("#0f766e"),
   baseCurrency: text("base_currency").notNull().default("USD"),
+  // UI language for this organization's dashboard. "ar" also switches layout to RTL.
+  locale: text("locale").notNull().default("en"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

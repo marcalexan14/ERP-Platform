@@ -4,21 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Receipt, FileText, BarChart3, Settings, Users, Repeat } from "lucide-react";
+import { getTranslator, type TranslationKey } from "@/lib/i18n";
 
 // Defined here (not passed as a prop) because icon components are functions,
 // and functions can't cross the server -> client component boundary.
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
-  { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
-  { href: "/dashboard/recurring", label: "Recurring", icon: Repeat },
-  { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
-  { href: "/dashboard/clients", label: "Clients", icon: Users },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+const NAV_ITEMS: { href: string; labelKey: TranslationKey; icon: typeof LayoutDashboard }[] = [
+  { href: "/dashboard", labelKey: "nav_dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/invoices", labelKey: "nav_invoices", icon: FileText },
+  { href: "/dashboard/expenses", labelKey: "nav_expenses", icon: Receipt },
+  { href: "/dashboard/recurring", labelKey: "nav_recurring", icon: Repeat },
+  { href: "/dashboard/reports", labelKey: "nav_reports", icon: BarChart3 },
+  { href: "/dashboard/clients", labelKey: "nav_clients", icon: Users },
+  { href: "/dashboard/settings", labelKey: "nav_settings", icon: Settings },
 ];
 
-export function SidebarNav() {
+export function SidebarNav({ locale }: { locale: string }) {
   const pathname = usePathname();
+  const t = getTranslator(locale);
 
   return (
     <nav className="flex-1 space-y-1 p-3">
@@ -43,7 +45,7 @@ export function SidebarNav() {
               className={`relative z-10 h-4 w-4 ${active ? "text-accent-foreground" : "text-muted-foreground"}`}
             />
             <span className={`relative z-10 ${active ? "text-accent-foreground" : "text-muted-foreground"}`}>
-              {item.label}
+              {t(item.labelKey)}
             </span>
           </Link>
         );

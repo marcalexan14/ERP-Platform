@@ -13,6 +13,11 @@ export function AnimatedNumber({ value }: { value: number }) {
 
   useEffect(() => {
     motionValue.set(value);
+    // Safety net: requestAnimationFrame-driven updates (the spring below) can be
+    // throttled or skipped entirely for backgrounded/inactive tabs, which would
+    // otherwise leave this stuck at its initial render value. Set the real value
+    // directly so it's always correct even if no animation frame ever runs.
+    if (ref.current) ref.current.textContent = currency.format(value);
   }, [value, motionValue]);
 
   useEffect(() => {
@@ -21,5 +26,5 @@ export function AnimatedNumber({ value }: { value: number }) {
     });
   }, [display]);
 
-  return <motion.span ref={ref}>{currency.format(0)}</motion.span>;
+  return <motion.span ref={ref}>{currency.format(value)}</motion.span>;
 }

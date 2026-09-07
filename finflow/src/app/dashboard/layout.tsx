@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { getCurrentOrganization } from "@/lib/org";
+import { getTranslator, isRtl } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
@@ -14,10 +15,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const org = await getCurrentOrganization(session.user.id);
   const accentColor = org?.accentColor ?? "#0f766e";
   const initials = (session.user.name ?? session.user.email ?? "?").slice(0, 2).toUpperCase();
+  const locale = org?.locale ?? "en";
+  const t = getTranslator(locale);
+  const rtl = isRtl(locale);
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar sm:flex">
+    <div dir={rtl ? "rtl" : "ltr"} className="flex min-h-screen bg-muted/30">
+      <aside className="hidden w-64 shrink-0 flex-col border-border bg-sidebar sm:flex ltr:border-r rtl:border-l">
         <div className="flex h-16 items-center gap-2 border-b border-border px-6">
           <span
             className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm"
@@ -33,9 +37,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             )}
           </span>
         </div>
-        <SidebarNav />
+        <SidebarNav locale={locale} />
         <div className="border-t border-border p-3 text-xs text-muted-foreground">
-          Signed in as <span className="font-medium text-foreground">{session.user.email}</span>
+          {t("signed_in_as")} <span className="font-medium text-foreground">{session.user.email}</span>
         </div>
       </aside>
 
@@ -54,7 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               }}
             >
               <Button type="submit" variant="ghost" size="sm">
-                Sign out
+                {t("sign_out")}
               </Button>
             </form>
           </div>

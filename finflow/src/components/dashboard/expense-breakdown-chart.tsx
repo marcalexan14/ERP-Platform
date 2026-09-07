@@ -22,17 +22,21 @@ function bucketize(data: Slice[], max = 4): Slice[] {
   return [...top, { name: "Other", value: otherTotal }];
 }
 
-export function ExpenseBreakdownChart({ data }: { data: Slice[] }) {
+export function ExpenseBreakdownChart({
+  data,
+  totalLabel = "Total",
+  emptyLabel = "No expenses yet — categorized spending will show up here.",
+}: {
+  data: Slice[];
+  totalLabel?: string;
+  emptyLabel?: string;
+}) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (data.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-        No expenses yet — categorized spending will show up here.
-      </div>
-    );
+    return <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>;
   }
 
   const palette = mounted && resolvedTheme === "dark" ? PALETTE_DARK : PALETTE_LIGHT;
@@ -67,7 +71,7 @@ export function ExpenseBreakdownChart({ data }: { data: Slice[] }) {
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-9">
-        <span className="text-xs text-muted-foreground">Total</span>
+        <span className="text-xs text-muted-foreground">{totalLabel}</span>
         <span className="text-lg font-semibold tabular-nums">{currency.format(total)}</span>
       </div>
     </div>

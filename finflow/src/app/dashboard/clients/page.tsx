@@ -5,6 +5,7 @@ import { getCurrentOrganization } from "@/lib/org";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { addClientAction } from "@/app/actions/clients";
+import { getTranslator } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,8 @@ export default async function ClientsPage() {
   const org = await getCurrentOrganization(session.user.id);
   if (!org) redirect("/login");
 
+  const t = getTranslator(org.locale);
+
   const rows = await db.query.clients.findMany({
     where: eq(clients.organizationId, org.id),
     orderBy: asc(clients.name),
@@ -26,51 +29,51 @@ export default async function ClientsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
-        <p className="text-sm text-muted-foreground">Who you bill</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("clients_title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("clients_subtitle")}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Add client</CardTitle>
+          <CardTitle className="text-base">{t("clients_add")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={addClientAction} className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:items-end">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("clients_name")}</Label>
               <Input id="name" name="name" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("clients_email")}</Label>
               <Input id="email" name="email" type="email" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{t("clients_address")}</Label>
               <Input id="address" name="address" />
             </div>
-            <Button type="submit">Add client</Button>
+            <Button type="submit">{t("clients_add")}</Button>
           </form>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All clients</CardTitle>
+          <CardTitle className="text-base">{t("clients_all")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Address</TableHead>
+                <TableHead>{t("clients_name")}</TableHead>
+                <TableHead>{t("clients_email")}</TableHead>
+                <TableHead>{t("clients_address")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                    No clients yet.
+                    {t("clients_empty")}
                   </TableCell>
                 </TableRow>
               )}

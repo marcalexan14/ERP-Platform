@@ -32,16 +32,24 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
-export function RevenueChart({ data }: { data: Point[] }) {
+export function RevenueChart({
+  data,
+  revenueLabel = "Revenue",
+  expenseLabel = "Expenses",
+  emptyLabel = "No transactions yet — add an expense or income entry to see trends here.",
+}: {
+  data: Point[];
+  revenueLabel?: string;
+  expenseLabel?: string;
+  emptyLabel?: string;
+}) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-        No transactions yet — add an expense or income entry to see trends here.
-      </div>
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
     );
   }
 
@@ -82,7 +90,7 @@ export function RevenueChart({ data }: { data: Point[] }) {
           stroke={c.revenue}
           fill="url(#revenueFill)"
           strokeWidth={2}
-          name="Revenue"
+          name={revenueLabel}
           activeDot={{ r: 4 }}
           animationDuration={700}
         />
@@ -92,7 +100,7 @@ export function RevenueChart({ data }: { data: Point[] }) {
           stroke={c.expense}
           fill="url(#expenseFill)"
           strokeWidth={2}
-          name="Expenses"
+          name={expenseLabel}
           activeDot={{ r: 4 }}
           animationDuration={700}
         />

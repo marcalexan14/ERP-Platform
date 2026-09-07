@@ -8,6 +8,7 @@ import { invoices, clients } from "@/db/schema";
 import { computeInvoiceTotal } from "@/lib/invoices";
 import { markInvoicePaidAction } from "@/app/actions/invoices";
 import { InvoiceForm } from "@/components/dashboard/invoice-form";
+import { getTranslator, type TranslationKey } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
+const STATUS_KEYS: Record<string, TranslationKey> = {
+  DRAFT: "status_draft",
+  SENT: "status_sent",
+  PAID: "status_paid",
+  OVERDUE: "status_overdue",
+  VOID: "status_void",
+};
+
 export default async function InvoicesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const org = await getCurrentOrganization(session.user.id);
   if (!org) redirect("/login");
+
+  const t = getTranslator(org.locale);
 
   const orgClients = await db.query.clients.findMany({
     where: eq(clients.organizationId, org.id),
@@ -37,52 +48,51 @@ export default async function InvoicesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
-        <p className="text-sm text-muted-foreground">Bill your clients and track what&apos;s outstanding</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("invoices_title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("invoices_subtitle")}</p>
       </div>
 
       {orgClients.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-sm text-muted-foreground">
-            Add a client first before creating an invoice — see the{" "}
+            {t("invoices_add_client_first")}{" "}
             <Link href="/dashboard/clients" className="underline underline-offset-4">
-              Clients
-            </Link>{" "}
-            page.
+              {t("invoices_clients_link")}
+            </Link>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">New invoice</CardTitle>
+            <CardTitle className="text-base">{t("invoices_new")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <InvoiceForm clients={orgClients} />
+            <InvoiceForm clients={orgClients} locale={org.locale} />
           </CardContent>
         </Card>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All invoices</CardTitle>
+          <CardTitle className="text-base">{t("invoices_all")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>{t("invoices_col_number")}</TableHead>
+                <TableHead>{t("invoices_col_client")}</TableHead>
+                <TableHead>{t("invoices_col_status")}</TableHead>
+                <TableHead>{t("invoices_col_due")}</TableHead>
+                <TableHead className="text-right">{t("invoices_col_total")}</TableHead>
+                <TableHead className="text-right">{t("invoices_col_action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orgInvoices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                    No invoices yet.
+                    {t("invoices_empty")}
                   </TableCell>
                 </TableRow>
               )}
@@ -96,7 +106,7 @@ export default async function InvoicesPage() {
                         inv.status === "PAID" ? "default" : inv.status === "OVERDUE" ? "destructive" : "secondary"
                       }
                     >
-                      {inv.status}
+                      {t(STATUS_KEYS[inv.status])}
                     </Badge>
                   </TableCell>
                   <TableCell>{dateFormat.format(inv.dueDate)}</TableCell>
@@ -106,7 +116,7 @@ export default async function InvoicesPage() {
                       <form action={markInvoicePaidAction}>
                         <input type="hidden" name="invoiceId" value={inv.id} />
                         <Button type="submit" size="sm" variant="outline">
-                          Mark paid
+                          {t("invoices_mark_paid")}
                         </Button>
                       </form>
                     )}

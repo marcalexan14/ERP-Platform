@@ -12,6 +12,8 @@ export function KpiCard({
   value,
   icon,
   trend,
+  noPriorDataLabel = "No prior data",
+  vsLastMonthLabel = "vs last month",
   delay = 0,
 }: {
   label: string;
@@ -20,6 +22,8 @@ export function KpiCard({
   // reference — component functions can't cross the server -> client boundary.
   icon: React.ReactNode;
   trend?: Trend;
+  noPriorDataLabel?: string;
+  vsLastMonthLabel?: string;
   delay?: number;
 }) {
   const isUp = trend && trend.pct !== null && trend.pct > 0;
@@ -46,7 +50,7 @@ export function KpiCard({
           {trend && (
             <div className="mt-1.5 flex items-center gap-1 text-xs">
               {trend.pct === null ? (
-                <span className="text-muted-foreground">No prior data</span>
+                <span className="text-muted-foreground">{noPriorDataLabel}</span>
               ) : (
                 <>
                   <span
@@ -58,7 +62,7 @@ export function KpiCard({
                     {isDown && <ArrowDownRight className="h-3.5 w-3.5" />}
                     {Math.abs(trend.pct).toFixed(0)}%
                   </span>
-                  <span className="text-muted-foreground">vs last month</span>
+                  <span className="text-muted-foreground">{vsLastMonthLabel}</span>
                 </>
               )}
             </div>
