@@ -1,0 +1,6 @@
+
+# Independent projects with their own git repo and GitHub remote --
+# intentionally not tracked inside this outer repo.
+/money-journal-live/
+/gher-motazen/
+/schoolflow/
